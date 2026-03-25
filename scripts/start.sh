@@ -9,6 +9,8 @@ cd "$ROOT"
 
 source venv/bin/activate 2>/dev/null || true
 
+mkdir -p logs
+
 # Читаем настройки из конфига
 SETTINGS=$(python3 -c "
 import yaml, os
@@ -19,15 +21,6 @@ print(f\"{c['model']['path']}|{threads}|{c['model']['ctx_size']}|{c['model']['ma
 ")
 
 IFS='|' read -r MODEL THREADS CTX MAX_TOK TEMP TOP_K REP_PEN LLAMA_PORT HOST PORT <<< "$SETTINGS"
-
-# Системный промпт → файл (кириллица не проходит через bash-аргументы)
-python3 -c "
-import yaml
-with open('config/settings.yaml') as f:
-    c = yaml.safe_load(f)
-with open('.system_prompt.txt', 'w') as f:
-    f.write(c['model'].get('system_prompt', ''))
-"
 
 # ── Проверка модели ──
 if [ ! -f "$MODEL" ]; then
@@ -61,7 +54,6 @@ echo "Запуск llama.cpp на порту $LLAMA_PORT..."
     --temp "$TEMP" \
     --top-k "$TOP_K" \
     --repeat-penalty "$REP_PEN" \
-    --system-prompt-file .system_prompt.txt \
     > logs/llama.log 2>&1 &
 
 echo $! > .llama.pid
@@ -80,7 +72,6 @@ done
 
 # ── 2. Запуск FastAPI (фон) ──
 echo "Запуск API-сервера на порту $PORT..."
-mkdir -p logs
 python3 -m uvicorn server:app \
     --host "$HOST" \
     --port "$PORT" \

@@ -24,8 +24,8 @@ ds = load_dataset(ds_name, split='train')
 
 pairs = []
 for r in ds:
-    tyv = r.get('tyv', '').strip()
-    ru = r.get('ru', '').strip()
+    tyv = (r.get('tyv') or '').strip()
+    ru = (r.get('ru') or '').strip()
     if tyv and ru:
         pairs.append({'tyv': tyv, 'ru': ru})
 

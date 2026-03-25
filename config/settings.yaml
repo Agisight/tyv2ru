@@ -1,43 +1,23 @@
-# ── Настройки тувинско-русского переводчика ──
-
 model:
-  # Путь к GGUF-модели (относительно корня проекта)
-  path: models/gemma-3-1b-it.Q4_K_M.gguf
-  # HuggingFace repo для скачивания/обновления
-  hf_repo: Agisight/gemma3-tyvan-1b-gguf-10k
-  hf_file: gemma-3-1b-it.Q4_K_M.gguf
-  # Количество потоков CPU (auto = все ядра)
+  path: models/gemma3-tyvan-merged-17k.Q4_K_M.gguf
+  hf_repo: Agisight/gemma3-tyvan-1b-gguf-17k
+  hf_file: gemma3-tyvan-merged-17k.Q4_K_M.gguf
   threads: auto
-  # Системный промпт (поведение модели в чате)
-  system_prompt: "Ты — переводчик тувинского и русского языков. Переводи текст, не добавляя ничего лишнего. Если текст на тувинском — переведи на русский. Если на русском — переведи на тувинский."
-  # Размер контекста в токенах
   ctx_size: 2048
-  # Максимум токенов в ответе
-  max_tokens: 256
-  # Температура (0.0 = детерминированный, для перевода лучше 0.0)
+  max_tokens: 64
   temp: 0.0
-  # Top-K сэмплирование (1 = самый вероятный токен)
   top_k: 1
-  # Штраф за повторения
-  repeat_penalty: 1.1
+  repeat_penalty: 1.3
 
 rag:
-  # Включить RAG (подстановка похожих примеров из датасета)
-  enabled: true
-  # Сколько примеров подставлять в промпт
-  top_k: 5
-  # Путь к JSON-датасету
+  enabled: false
+  top_k: 3
   dataset: data/tyv_rus_pairs.json
-  # HuggingFace датасет для скачивания
   hf_dataset: Agisight/tyv-rus-200k
-  # Модель эмбеддингов для поиска похожих пар
   encoder_model: intfloat/multilingual-e5-small
-  # Кэш эмбеддингов (чтобы не пересчитывать каждый запуск)
   embeddings_cache: data/embeddings.npy
 
 server:
   host: 0.0.0.0
-  # Порт API-сервера (основной, для клиентов)
   port: 8077
-  # Внутренний порт llama.cpp (не открывать наружу)
   llama_port: 8078
