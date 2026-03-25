@@ -6,8 +6,8 @@
 """
 
 import json
-import re
 import os
+import re
 import time
 from pathlib import Path
 
@@ -302,9 +302,11 @@ def translate(req: TranslateRequest):
             "messages": [{"role": "user", "content": prompt}],
             "temperature": CFG["model"]["temp"],
             "max_tokens": CFG["model"]["max_tokens"],
+            "stop": ["\n", "<end_of_turn>"],
         }, timeout=30)
         resp.raise_for_status()
         result = resp.json()["choices"][0]["message"]["content"].strip()
+        result = re.sub(r'<[^>]+>', '', result).strip()
     except requests.exceptions.ConnectionError:
         raise HTTPException(503, "llama.cpp сервер не запущен")
     except Exception as e:
@@ -352,9 +354,15 @@ def chat_completions(req: ChatRequest):
             "messages": [m.model_dump() for m in req.messages],
             "temperature": req.temperature,
             "max_tokens": req.max_tokens,
+            "stop": ["\n", "<end_of_turn>"],
         }, timeout=30)
         resp.raise_for_status()
-        return resp.json()
+        data = resp.json()
+        # Чистим спецтокены из ответа
+        if data.get("choices") and data["choices"][0].get("message"):
+            content = data["choices"][0]["message"]["content"]
+            data["choices"][0]["message"]["content"] = re.sub(r'<[^>]+>', '', content).strip()
+        return data
     except requests.exceptions.ConnectionError:
         raise HTTPException(503, "llama.cpp сервер не запущен")
 
