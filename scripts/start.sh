@@ -7,7 +7,22 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$ROOT"
 
-source venv/bin/activate 2>/dev/null || true
+# ── Цвета ──
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+# ── Проверка: установлен ли переводчик? ──
+if [ ! -f "llama-server" ] || [ ! -d "venv" ]; then
+    echo -e "${YELLOW}Переводчик не установлен. Запускаю установку...${NC}"
+    echo ""
+    "$SCRIPT_DIR/install.sh"
+    echo ""
+fi
+
+source venv/bin/activate 2>/dev/null || { echo -e "${RED}venv не найден. Запустите: ./scripts/install.sh${NC}"; exit 1; }
 
 mkdir -p logs
 
@@ -24,7 +39,7 @@ IFS='|' read -r MODEL THREADS CTX MAX_TOK TEMP TOP_K REP_PEN LLAMA_PORT HOST POR
 
 # ── Проверка модели ──
 if [ ! -f "$MODEL" ]; then
-    echo "Модель не найдена: $MODEL"
+    echo -e "${RED}Модель не найдена: $MODEL${NC}"
     echo "Запустите: ./scripts/install.sh"
     exit 1
 fi
@@ -32,9 +47,10 @@ fi
 # ── Остановить предыдущие процессы ──
 "$SCRIPT_DIR/stop.sh" 2>/dev/null || true
 
-echo "══════════════════════════════════════════"
-echo "  Тувинско-русский переводчик"
-echo "══════════════════════════════════════════"
+echo ""
+echo -e "${CYAN}══════════════════════════════════════════════════${NC}"
+echo -e "${CYAN}  Тувинско-русский переводчик${NC}"
+echo -e "${CYAN}══════════════════════════════════════════════════${NC}"
 echo ""
 echo "  Модель:  $MODEL"
 echo "  Потоки:  $THREADS"
@@ -43,7 +59,7 @@ echo "  RAG:     $(python3 -c "import yaml; print(yaml.safe_load(open('config/se
 echo ""
 
 # ── 1. Запуск llama.cpp (фон) ──
-echo "Запуск llama.cpp на порту $LLAMA_PORT..."
+echo -n "  Запуск llama.cpp на порту $LLAMA_PORT..."
 ./llama-server \
     -m "$MODEL" \
     --host 127.0.0.1 \
@@ -57,21 +73,24 @@ echo "Запуск llama.cpp на порту $LLAMA_PORT..."
     > logs/llama.log 2>&1 &
 
 echo $! > .llama.pid
-echo "  PID: $(cat .llama.pid)"
 
 # Ждём готовности
-echo -n "  Ожидание..."
-for i in $(seq 1 30); do
+for i in $(seq 1 60); do
     if curl -s "http://127.0.0.1:$LLAMA_PORT/health" > /dev/null 2>&1; then
-        echo " готов!"
+        echo -e " ${GREEN}готов!${NC} (PID $(cat .llama.pid))"
         break
     fi
-    sleep 1
+    if [ $i -eq 60 ]; then
+        echo -e " ${RED}таймаут!${NC}"
+        echo "  Проверьте: tail -f logs/llama.log"
+        exit 1
+    fi
     echo -n "."
+    sleep 1
 done
 
 # ── 2. Запуск FastAPI (фон) ──
-echo "Запуск API-сервера на порту $PORT..."
+echo -n "  Запуск API-сервера на порту $PORT..."
 python3 -m uvicorn server:app \
     --host "$HOST" \
     --port "$PORT" \
@@ -79,15 +98,26 @@ python3 -m uvicorn server:app \
     > logs/server.log 2>&1 &
 
 echo $! > .server.pid
-echo "  PID: $(cat .server.pid)"
 
-sleep 2
+# Ждём готовности FastAPI
+for i in $(seq 1 15); do
+    if curl -s "http://127.0.0.1:$PORT/health" > /dev/null 2>&1; then
+        echo -e " ${GREEN}готов!${NC} (PID $(cat .server.pid))"
+        break
+    fi
+    if [ $i -eq 15 ]; then
+        echo -e " ${YELLOW}запущен, но health не отвечает${NC}"
+    fi
+    sleep 1
+done
 
 echo ""
-echo "Готово!"
-echo "  API:     http://$HOST:$PORT/translate"
-echo "  Чат:     http://$HOST:$LLAMA_PORT"
-echo "  Здоровье: http://$HOST:$PORT/health"
+echo -e "${GREEN}  Готово!${NC}"
 echo ""
-echo "  Логи: tail -f logs/llama.log logs/server.log"
-echo "  Стоп: ./scripts/stop.sh"
+echo "  Веб-чат:     http://localhost:$PORT"
+echo "  API:         http://localhost:$PORT/translate"
+echo "  Здоровье:    http://localhost:$PORT/health"
+echo ""
+echo "  Логи:  tail -f logs/llama.log logs/server.log"
+echo "  Стоп:  ./scripts/stop.sh"
+echo ""
