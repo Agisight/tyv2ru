@@ -301,7 +301,7 @@ def translate(req: TranslateRequest):
         resp = requests.post(LLAMA_URL, json={
             "messages": [{"role": "user", "content": prompt}],
             "temperature": CFG["model"]["temp"],
-            "max_tokens": CFG["model"]["max_tokens"],
+            "max_tokens": min(CFG["model"]["max_tokens"], max(16, len(req.text) * 3)),
             "stop": ["\n", "<end_of_turn>"],
         }, timeout=30)
         resp.raise_for_status()
