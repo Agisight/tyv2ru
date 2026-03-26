@@ -1,7 +1,7 @@
 model:
-  path: models/gemma3-tyvan-merged-17k.Q4_K_M.gguf
-  hf_repo: Agisight/gemma3-tyvan-1b-gguf-17k
-  hf_file: gemma3-tyvan-merged-17k.Q4_K_M.gguf
+  path: models/gemma-3-1b-it.Q4_K_M.gguf
+  hf_repo: Agisight/gemma3-tyvan-1b-gguf-full
+  hf_file: gemma-3-1b-it.Q4_K_M.gguf
   threads: auto
   ctx_size: 2048
   max_tokens: 64
