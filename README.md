@@ -142,8 +142,12 @@ tyv2ru/
 ├── Makefile                  # make start/stop/test/...
 ├── README.md
 ├── config/
-│   └── settings.yaml        # все настройки
+│   ├── settings.yaml        # настройки переводчика
+│   └── deploy.yaml          # параметры сервера
+├── docs/
+│   └── SERVER.md            # документация инфраструктуры
 ├── scripts/
+│   ├── deploy.sh             # деплой на сервер (systemd)
 │   ├── install.sh            # установка всего
 │   ├── start.sh              # запуск (с автоустановкой)
 │   ├── stop.sh               # остановка
@@ -158,6 +162,23 @@ tyv2ru/
 │   └── tyv_rus_pairs.json
 └── models/                   # создаётся при install
     └── *.gguf
+```
+
+## Сервер
+
+Подробная документация: [docs/SERVER.md](docs/SERVER.md)
+
+- **Хост:** Aldan (Proxmox 9.0.10)
+- **Контейнер:** LXC 104, Ubuntu, 4 CPU, 10 ГБ RAM
+- **IP:** <YOUR_SERVER_IP> (внешний), 10.10.10.50 (внутренний)
+- **UI:** http://<YOUR_SERVER_IP>:8077
+
+### Деплой на сервер
+
+Открыть консоль контейнера 104 в Proxmox и выполнить:
+
+```bash
+cd /opt/translator && git clone https://github.com/Agisight/tyv2ru.git && cd tyv2ru && ./scripts/deploy.sh
 ```
 
 ## Лицензия
