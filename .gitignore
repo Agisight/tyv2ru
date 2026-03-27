@@ -1,0 +1,24 @@
+# Модели
+models/
+*.gguf
+
+# llama.cpp
+llama.cpp/
+llama-server
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Данные
+data/
+*.npy
+
+# Логи и PID
+logs/
+.llama.pid
+.server.pid
+
+# Тесты
+test_results.json

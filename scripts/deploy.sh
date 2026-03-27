@@ -69,17 +69,15 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=$INSTALL_PATH
-ExecStartPre=/bin/bash -c 'source venv/bin/activate && python3 -c "import yaml,os; c=yaml.safe_load(open(\"config/settings.yaml\")); print(\"Config OK\")"'
 ExecStart=$INSTALL_PATH/llama-server \\
     -m $INSTALL_PATH/models/gemma-3-1b-it.Q4_K_M.gguf \\
     --host 127.0.0.1 \\
     --port 8078 \\
     --threads 4 \\
     --ctx-size 2048 \\
-    --n-predict 64 \\
+    --n-predict 32 \\
     --temp 0.0 \\
-    --top-k 1 \\
-    --repeat-penalty 1.3
+    --top-k 1
 Restart=always
 RestartSec=5
 StandardOutput=journal
